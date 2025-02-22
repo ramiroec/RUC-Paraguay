@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de RUC 🇵🇾</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+
+        /* Contenedor principal */
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        /* Título */
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        /* Campo de entrada de texto */
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            outline: none;
+        }
+
+        /* Placeholder del campo de entrada */
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Estilos de los botones */
+        button {
+            background-color: #ff6f61;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin: 10px;
+        }
+
+        /* Efecto hover en los botones */
+        button:hover {
+            background-color: #ff3b2f;
+            transform: scale(1.1);
+        }
+
+        /* Contenedor de resultados */
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.5s ease, opacity 0.5s ease, padding 0.5s ease;
+        }
+
+        /* Clase para mostrar los resultados */
+        #result.visible {
+            max-height: 500px; /* Ajusta según el contenido */
+            opacity: 1;
+            padding: 20px;
+        }
+
+        /* Estilos de los elementos de resultado */
+        .result-item {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .result-item strong {
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        /* Estilo especial para el botón espectacular */
+        .spectacular-button {
+            background-color: #4CAF50; /* Verde */
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Animación de pulso para el botón espectacular */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consulta de RUC 🇵🇾</h1>
+        <!-- Campo de entrada para el RUC -->
+        <input type="text" id="rucInput" placeholder="Ingrese el RUC">
+        <!-- Botón para buscar por RUC -->
+        <button id="searchButton">Buscar por RUC</button>
+        <!-- Botón espectacular para buscar por Razón Social -->
+        <button id="searchByNameButton" class="spectacular-button">Buscar por Razón Social</button>
+        <!-- Contenedor para mostrar los resultados -->
+        <div id="result">
+            <!-- Aquí se mostrarán los detalles del contribuyente -->
+        </div>
+    </div>
+
+    <script>
+        // Esperar a que el DOM esté completamente cargado
+        document.addEventListener("DOMContentLoaded", function() {
+            // Obtener referencias a los elementos del DOM
+            const searchButton = document.getElementById('searchButton');
+            const searchByNameButton = document.getElementById('searchByNameButton');
+            const rucInput = document.getElementById('rucInput');
+            const resultDiv = document.getElementById('result');
+
+            // Evento para buscar por RUC
+            searchButton.addEventListener('click', async function() {
+                const ruc = rucInput.value.trim();
+                if (!ruc) {
+                    alert("Por favor, ingrese un RUC válido.");
+                    return;
+                }
+
+                try {
+                    // Hacer la solicitud al servidor
+                    const response = await fetch(`/contribuyente/${ruc}`);
+                    if (!response.ok) {
+                        throw new Error("RUC no encontrado");
+                    }
+
+                    // Procesar la respuesta
+                    const contribuyente = await response.json();
+                    displayResult(contribuyente);
+                } catch (error) {
+                    // Mostrar error en caso de fallo
+                    resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+                    resultDiv.classList.add('visible');
+                }
+            });
+
+            // Evento para redirigir a la búsqueda por Razón Social
+            searchByNameButton.addEventListener('click', function() {
+                window.location.href = '/buscar';
+            });
+
+            // Función para mostrar los resultados
+            function displayResult(contribuyente) {
+                resultDiv.innerHTML = `
+                    <div class="result-item">
+                        <strong>RUC:</strong> ${contribuyente.ruc}
+                    </div>
+                    <div class="result-item">
+                        <strong>Razón Social:</strong> ${contribuyente.razonSocial}
+                    </div>
+                    <div class="result-item">
+                        <strong>Dígito Verificador:</strong> ${contribuyente.digitoVerificador}
+                    </div>
+                    <div class="result-item">
+                        <strong>RUC Anterior:</strong> ${contribuyente.rucAnterior || 'N/A'}
+                    </div>
+                    <div class="result-item">
+                        <strong>Estado:</strong> ${contribuyente.estado}
+                    </div>
+                `;
+                resultDiv.classList.add('visible');
+            }
+        });
+    </script>
+</body>
+</html>
